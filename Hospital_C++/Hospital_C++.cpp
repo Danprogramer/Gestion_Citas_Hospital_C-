@@ -1,11 +1,29 @@
 ﻿#include "Hospital_C++.h"
-#include "iostream"
-#include "vector"
-
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <algorithm>
 
 using namespace std;
 
-class Cita;
+class Cita {
+private:
+    int idCita;
+    int idPaciente;
+    int idMedico;
+    string fecha;
+    bool esUrgente;
+
+public:
+    Cita(int idCita, int idPaciente, int idMedico, const string& fecha, bool esUrgente)
+        : idCita(idCita), idPaciente(idPaciente), idMedico(idMedico), fecha(fecha), esUrgente(esUrgente) {
+    }
+
+    int getId() const { return idCita; }
+    string getFecha() const { return fecha; }
+    bool getUrgencia() const { return esUrgente; }
+};
+
 
 class Paciente {
 private:
@@ -37,10 +55,10 @@ public:
             });
         if (it != citas.end()) {
             citas.erase(it, citas.end());
-            cout << "Cita con ID " << idCita << " eliminada exitosamente." << endl;
+            cout << "Cita con ID " << idCita << " Eliminada exitosamente." << endl;
         }
         else {
-            cout << "Cita con ID " << idCita << " no encontrada." << endl;
+            cout << "Cita con ID " << idCita << " No encontrada." << endl;
         }
     }
 
@@ -68,7 +86,21 @@ public:
     string getNombre() const { return nombre; }
 };
 
+
+
+
+
+
+
 int main()
 {
-	
+    shared_ptr<Paciente> paciente = make_shared<Paciente>(1, "Juan Perez", "2023-01-01");
+    shared_ptr<Medico> medico = make_shared<Medico>(1, "Dr. Gomez", "Cardiologia");
+    shared_ptr<Cita> cita = make_shared<Cita>(1, paciente->getId(), medico->getId(), "2023-12-10", false);
+
+    paciente->agregarCita(cita);
+    paciente->registrarHistorial("Paciente ingresado por chequeo de rutina.");
+    paciente->eliminarCita(1);
+
+    return 0;
 }
