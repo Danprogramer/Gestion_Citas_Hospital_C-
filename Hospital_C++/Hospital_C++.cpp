@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <fstream>
 #include <string>
+#include <ctime>
 
 using namespace std;
 
@@ -58,13 +59,13 @@ public:
             citas.erase(it, citas.end());
             cout << "Cita con ID " << idCita << " Eliminada exitosamente." << endl;
         }
-        else {
+        else{
             cout << "Cita con ID " << idCita << " No encontrada." << endl;
         }
     }
 
-    int getId() const {return id;}
-    string getNombre() const {return nombre;}
+    int getId() const { return id; }
+    string getNombre() const { return nombre; }
 };
 
 
@@ -87,72 +88,92 @@ public:
     string getNombre() const {return nombre;}
 };
 
+void CSV(const vector<shared_ptr<Cita>>& citas){
+    time_t ahora = time(nullptr);
+    char buffer[20];
+    strftime(buffer, sizeof(buffer), "%Y%m%d_%H%M%S", localtime(&ahora));
+    string nombreBackup = "citas_backup_" + string(buffer) + ".csv";
 
+    ofstream archivoBackup(nombreBackup);
+    if (!archivoBackup.is_open()){
+        cerr << "Error al crear el archivo de respaldo CSV." << endl;
+        return;
+    }
 
+    archivoBackup << "ID Cita,ID Paciente,ID Medico,Fecha,Urgente" << endl;
+    for (const auto& cita : citas){
+        archivoBackup << cita->getId() << "," << cita->getId() << "," << cita->getId() << "," << cita->getFecha() << "," << (cita->getUrgencia() ? "Sí" : "No") << endl;
+    }
 
-
-
+    archivoBackup.close();
+    cout << "Respaldo creado exitosamente: " << nombreBackup << endl;
+}
 
 
     
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
 
-        if (argc < 2) {
-            cerr << "Uso: " << argv[0] << " <modo> <opciones>\n";
-            cerr << "Modos disponibles:\n";
-            cerr << "  agregar: Agrega una nueva cita.\n";
-            cerr << "  eliminar <ID>: Elimina una cita existente por su ID.\n";
-            cerr << "  consultar: Genera un archivo con el listado de citas ordenadas por fecha.\n";
+    if (argc < 2) {
+        cerr << "Uso: " << argv[0] << " <modo> <opciones>\n";
+        cerr << "Modos disponibles:\n";
+        cerr << "  agregar: Agrega una nueva cita.\n";
+        cerr << "  eliminar <ID>: Elimina una cita existente por su ID.\n";
+        cerr << "  consultar: Genera un archivo con el listado de citas ordenadas por fecha.\n";
+        return 1;
+    }
+
+    string modo = argv[1];
+
+    shared_ptr<Paciente> paciente = make_shared<Paciente>(1, "Juan Perez", "2023-01-01");
+    shared_ptr<Medico> medico = make_shared<Medico>(1, "Dr. Gomez", "Cardiologia");
+
+    if (modo == "agregar") {
+        cout << "Ejecutando modo: Agregar cita." << endl;
+        shared_ptr<Cita> cita = make_shared<Cita>(1, paciente->getId(), medico->getId(), "2023-12-10", false);
+        paciente->agregarCita(cita);
+        cout << "Cita agregada exitosamente." << endl;
+    }
+
+    else if (modo == "eliminar") {
+        if (argc < 3) {
+            cerr << "Debe especificar el ID de la cita a eliminar." << endl;
+            return 1;
+        }
+        int idCita = stoi(argv[2]);
+        cout << "Ejecutando modo: Eliminar cita con ID " << idCita << endl;
+        paciente->eliminarCita(idCita);
+    }
+
+    else if (modo == "consultar") {
+        cout << "Ejecutando modo: Consultar citas." << endl;
+        ofstream archivo("citas.txt");
+        if (!archivo.is_open()) {
+            cerr << "Error al abrir el archivo para escribir." << endl;
             return 1;
         }
 
-        string modo = argv[1];
+        vector<shared_ptr<Cita>> citas; // Simulando el listado de citas del paciente
+        citas.push_back(make_shared<Cita>(1, paciente->getId(), medico->getId(), "2023-12-10", false));
+        citas.push_back(make_shared<Cita>(2, paciente->getId(), medico->getId(), "2023-12-05", true));
 
-        shared_ptr<Paciente> paciente = make_shared<Paciente>(1, "Juan Perez", "2023-01-01");
-        shared_ptr<Medico> medico = make_shared<Medico>(1, "Dr. Gomez", "Cardiologia");
+        sort(citas.begin(), citas.end(), [](shared_ptr<Cita> a, shared_ptr<Cita> b) {
+            return a->getFecha() < b->getFecha();
+            });
 
-        if (modo == "agregar"){
-            cout << "Ejecutando modo: Agregar cita." << endl;
-            shared_ptr<Cita> cita = make_shared<Cita>(1, paciente->getId(), medico->getId(), "2023-12-10", false);
-            paciente->agregarCita(cita);
-            cout << "Cita agregada exitosamente." << endl;
-        }
-        else if (modo == "eliminar"){
-            if (argc < 3){
-                cerr << "Debe especificar el ID de la cita a eliminar." << endl;
-                return 1;
-            }
-            int idCita = stoi(argv[2]);
-            cout << "Ejecutando modo: Eliminar cita con ID " << idCita << endl;
-            paciente->eliminarCita(idCita);
-        }
-        else if (modo == "consultar"){
-            cout << "Ejecutando modo: Consultar citas." << endl;
-            ofstream archivo("citas.txt");
-            if (!archivo.is_open()){
-                cerr << "Error al abrir el archivo para escribir." << endl;
-                return 1;
-            }
-
-            vector<shared_ptr<Cita>> citas; // Simulando el listado de citas del paciente
-            citas.push_back(make_shared<Cita>(1, paciente->getId(), medico->getId(), "2023-12-10", false));
-            citas.push_back(make_shared<Cita>(2, paciente->getId(), medico->getId(), "2023-12-05", true));
-
-            sort(citas.begin(), citas.end(), [](shared_ptr<Cita> a, shared_ptr<Cita> b){
-                return a->getFecha() < b->getFecha();
-                });
-
-            for (const auto& cita : citas){
-                archivo << "Cita ID: " << cita->getId() << ", Fecha: " << cita->getFecha() << ", Urgente: " << (cita->getUrgencia() ? "Sí" : "No") << endl;
-            }
-
-            archivo.close();
-            cout << "Listado de citas guardado en 'citas.txt'." << endl;
-        }
-        else{
-            cerr << "Modo no reconocido. Use: agregar, eliminar o consultar." << endl;
-            return 1;
+        for (const auto& cita : citas) {
+            archivo << "Cita ID: " << cita->getId() << ", Fecha: " << cita->getFecha() << ", Urgente: " << (cita->getUrgencia() ? "Sí" : "No") << endl;
         }
 
-        return 0;
+        archivo.close();
+        cout << "Listado de citas guardado en 'citas.txt'." << endl;
+
+        // Crear copia de seguridad
+        CSV(citas);
+    }
+    else {
+        cerr << "Modo no reconocido. Use: agregar, eliminar o consultar." << endl;
+        return 1;
+    }
+
+    return 0;
 }
