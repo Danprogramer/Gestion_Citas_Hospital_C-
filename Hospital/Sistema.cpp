@@ -3,6 +3,8 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <regex>
+#include <limits>
 
 
 Sistema::Sistema() {
@@ -10,6 +12,12 @@ Sistema::Sistema() {
     cargarPacientesCSV("Pacientes.csv");
     cargarMedicosCSV("Medicos.csv");
     cargarCitasCSV("Citas.csv");
+
+    medicos.push_back(Medico(1, "Dr. Rodrigo Gonzalez", "Cardiologia"));
+    medicos.push_back(Medico(2, "Dr. Miguel Gomez", "Neumologia"));
+    medicos.push_back(Medico(3, "Dr. Juan Ortega", "Dermatologia"));
+    medicos.push_back(Medico(4, "Dr. Alex Perez", "Pediatria"));
+    medicos.push_back(Medico(5, "Dr. Oscar Suarez", "Traumatologia"));
 }
 
 //================= Carga y guarda de CSV =================
@@ -131,21 +139,59 @@ void Sistema::guardarCitasCSV(const std::string& ruta) {
 
 void Sistema::registrarUsuario() {
     std::string nombre, apellidos, dni, nss;
-    std::cout << "=== Registrar Usuario ===\n";
-    std::cout << "Nombre: ";
-    std::getline(std::cin, nombre);
-    std::cout << "Apellidos: ";
-    std::getline(std::cin, apellidos);
-    std::cout << "DNI: ";
-    std::getline(std::cin, dni);
-    std::cout << "NSS: ";
-    std::getline(std::cin, nss);
+    bool datosValidos = false;
+
+    while (!datosValidos) {
+        std::cout << "=== Registrar Usuario ===\n";
+        std::cout << "Por favor, introduzca los datos en el siguiente formato:\n";
+        std::cout << "Nombre (solo letras), Apellidos (solo letras), DNI (8 digitos y 1 letra), NSS (ejemplo: 1234567890)\n\n";
+
+
+        std::cout << "Nombre: ";
+        std::getline(std::cin, nombre);
+
+        std::cout << "Apellidos: ";
+        std::getline(std::cin, apellidos);
+
+        std::cout << "DNI (p.e. 12345678A): ";
+        std::getline(std::cin, dni);
+
+        std::cout << "NSS (solo numeros): ";
+        std::getline(std::cin, nss);
+
+
+        bool nombreOK = std::regex_match(nombre, std::regex("^[A-Za-z]+( [A-Za-z]+)*$"));
+        bool apellidosOK = std::regex_match(apellidos, std::regex("^[A-Za-z]+( [A-Za-z]+)*$"));
+        bool dniOK = std::regex_match(dni, std::regex("^\\d{8}[A-Za-z]$"));
+        bool nssOK = std::regex_match(nss, std::regex("^\\d+$"));
+
+
+        if (!nombreOK) {
+            std::cout << "\n[ERROR] El nombre solo puede contener letras (y espacios intermedios opcionalmente).\n";
+        }
+        if (!apellidosOK) {
+            std::cout << "\n[ERROR] Los apellidos solo pueden contener letras (y espacios intermedios opcionalmente).\n";
+        }
+        if (!dniOK) {
+            std::cout << "\n[ERROR] El DNI debe tener 8 dígitos seguido de 1 letra, por ejemplo: 12345678A.\n";
+        }
+        if (!nssOK) {
+            std::cout << "\n[ERROR] El NSS debe ser solo números.\n";
+        }
+
+        datosValidos = (nombreOK && apellidosOK && dniOK && nssOK);
+
+        if (!datosValidos) {
+            std::cout << "\nPor favor, vuelva a introducir los datos.\n\n";
+        }
+    }
 
     Paciente nuevo(nombre, apellidos, dni, nss);
     pacientes.push_back(nuevo);
 
+
     guardarPacientesCSV("Pacientes.csv");
-    std::cout << "Usuario registrado y guardado en Pacientes.csv\n\n";
+    std::cout << "Usuario registrado correctamente y guardado en Pacientes.csv\n\n";
 }
 
 void Sistema::eliminarUsuario() {
