@@ -3,7 +3,7 @@
 #
 
 # Agregue un origen al ejecutable de este proyecto.
-add_executable (Hospital_C++ "Hospital_C++.cpp" "Hospital_C++.h")
+add_executable (Hospital_C++ "Paciente.cpp" "Paciente.h")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET Hospital_C++ PROPERTY CXX_STANDARD 20)
