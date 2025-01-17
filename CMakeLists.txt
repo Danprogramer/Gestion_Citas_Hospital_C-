@@ -12,4 +12,4 @@ endif()
 project ("Hospital_C++")
 
 # Incluya los subproyectos.
-add_subdirectory ("Hospital_C++")
+add_subdirectory ("Hospital")
