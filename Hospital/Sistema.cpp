@@ -222,8 +222,95 @@ void Sistema::consultarHorasDisponibles() {
 }
 
 void Sistema::registrarCita() {
+    bool datosValidos = false;
 
-    std::cout << "=== Registrar Cita ===\n";
+    while (!datosValidos) {
+        std::cout << "=== Registrar Cita ===\n";
+        std::cout << "Por favor, introduzca los datos en el siguiente formato:\n";
+        std::cout << "ID del medico (1..5)\n";
+        std::cout << "Fecha y hora en formato YYYY-MM-DD HH:MM (p.e. 2023-12-10 09:00)\n";
+        std::cout << "Disponibilidad (0 = Ocupada, 1 = Libre)\n\n";
+
+        int idCita;
+        int idMed;
+        std::string fecha;
+        bool disp;
+
+        std::string strIdMed;
+        std::cout << "ID del medico: ";
+        std::getline(std::cin, strIdMed);
+
+        std::cout << "Fecha (YYYY-MM-DD HH:MM): ";
+        std::getline(std::cin, fecha);
+
+        std::string strDisp;
+        std::cout << "Disponibilidad (0 = Ocupada, 1 = Libre): ";
+        std::getline(std::cin, strDisp);
+
+        bool medicoOK = true;
+        try {
+            idMed = std::stoi(strIdMed);
+            if (idMed < 1 || idMed > 5) {
+                medicoOK = false;
+            }
+        }
+        catch (...) {
+            medicoOK = false;
+        }
+
+        static const std::regex fechaRegex("^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}$");
+        bool fechaOK = std::regex_match(fecha, fechaRegex);
+
+
+        bool dispOK = (strDisp == "0" || strDisp == "1");
+        if (dispOK) {
+            disp = (strDisp == "1");
+        }
+
+        if (!medicoOK) {
+            std::cout << "\n[ERROR] El ID del medico debe ser un numero entre 1 y 5.\n";
+        }
+        if (!fechaOK) {
+            std::cout << "\n[ERROR] La fecha/hora deben tener formato YYYY-MM-DD HH:MM.\n";
+        }
+        if (!dispOK) {
+            std::cout << "\n[ERROR] La disponibilidad debe ser '0' o '1'.\n";
+        }
+
+        if (!medicoOK || !fechaOK || !dispOK) {
+            std::cout << "\nPor favor, vuelva a introducir los datos.\n\n";
+            continue;
+        }
+
+        bool horaDisponible = true;
+        for (auto& c : citas) {
+            if (c.getIdMedico() == idMed && c.getFecha() == fecha) {
+                std::cout << "[ERROR] El medico " << idMed
+                    << " ya tiene una cita el " << fecha << ".\n";
+                horaDisponible = false;
+                break;
+            }
+        }
+        if (!horaDisponible) {
+            std::cout << "Por favor, seleccione otra fecha/hora.\n\n";
+            continue;
+        }
+
+        idCita = static_cast<int>(citas.size()) + 1;
+
+        Cita nuevaCita(idCita, idMed, fecha, disp);
+        citas.push_back(nuevaCita);
+
+        guardarCitasCSV("Citas.csv");
+
+        std::cout << "\nCita creada con exito:\n"
+            << "  idCita = " << idCita << "\n"
+            << "  idMed = " << idMed << "\n"
+            << "  fecha = " << fecha << "\n"
+            << "  disp  = " << (disp ? "Libre" : "Ocupada") << "\n\n";
+
+        datosValidos = true;
+    }
 }
 
 void Sistema::eliminarCita() {
