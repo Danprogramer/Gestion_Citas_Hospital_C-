@@ -218,7 +218,28 @@ void Sistema::eliminarUsuario() {
 
 void Sistema::consultarHorasDisponibles() {
 
-    std::cout << "=== Consultar Horas Disponibles ===\n";
+    std::cout << "\n=== Consultar Citas ===\n";
+
+    cargarCitasCSV("Citas.csv");
+
+    if (citas.empty()) {
+        std::cout << "No hay citas registradas.\n";
+        return;
+    }
+
+    for (auto& c : citas) {
+        int    idC = c.getIdCita();
+        int    idMed = c.getIdMedico();
+        std::string f = c.getFecha();
+        bool   d = c.isDisponible();
+
+        std::cout << "Cita ID: " << idC
+            << " | Medico: " << idMed
+            << " | Fecha/Hora: " << f
+            << " | " << (d ? "[Libre]" : "[Ocupada]")
+            << "\n";
+    }
+    std::cout << std::endl;
 }
 
 void Sistema::registrarCita() {
@@ -229,12 +250,11 @@ void Sistema::registrarCita() {
         std::cout << "Por favor, introduzca los datos en el siguiente formato:\n";
         std::cout << "ID del medico (1..5)\n";
         std::cout << "Fecha y hora en formato YYYY-MM-DD HH:MM (p.e. 2023-12-10 09:00)\n";
-        std::cout << "Disponibilidad (0 = Ocupada, 1 = Libre)\n\n";
 
         int idCita;
         int idMed;
         std::string fecha;
-        bool disp;
+        bool disp = false;
 
         std::string strIdMed;
         std::cout << "ID del medico: ";
@@ -242,10 +262,6 @@ void Sistema::registrarCita() {
 
         std::cout << "Fecha (YYYY-MM-DD HH:MM): ";
         std::getline(std::cin, fecha);
-
-        std::string strDisp;
-        std::cout << "Disponibilidad (0 = Ocupada, 1 = Libre): ";
-        std::getline(std::cin, strDisp);
 
         bool medicoOK = true;
         try {
@@ -262,22 +278,14 @@ void Sistema::registrarCita() {
         bool fechaOK = std::regex_match(fecha, fechaRegex);
 
 
-        bool dispOK = (strDisp == "0" || strDisp == "1");
-        if (dispOK) {
-            disp = (strDisp == "1");
-        }
-
         if (!medicoOK) {
             std::cout << "\n[ERROR] El ID del medico debe ser un numero entre 1 y 5.\n";
         }
         if (!fechaOK) {
             std::cout << "\n[ERROR] La fecha/hora deben tener formato YYYY-MM-DD HH:MM.\n";
         }
-        if (!dispOK) {
-            std::cout << "\n[ERROR] La disponibilidad debe ser '0' o '1'.\n";
-        }
 
-        if (!medicoOK || !fechaOK || !dispOK) {
+        if (!medicoOK || !fechaOK) {
             std::cout << "\nPor favor, vuelva a introducir los datos.\n\n";
             continue;
         }
@@ -316,7 +324,41 @@ void Sistema::registrarCita() {
 void Sistema::eliminarCita() {
 
     std::cout << "=== Eliminar Cita ===\n";
-  
+    std::cout << "Introduzca el ID de la cita a eliminar: ";
+
+    std::string input;
+    std::getline(std::cin, input);
+
+    int idCitaABorrar = 0;
+
+    try {
+        idCitaABorrar = std::stoi(input);
+    }
+    catch (...) {
+        std::cout << "[ERROR] El ID de la cita debe ser un numero entero.\n";
+        return;
+    }
+
+    bool citaEncontrada = false;
+
+    auto it = std::remove_if(citas.begin(), citas.end(),
+        [idCitaABorrar](const Cita& c) {
+            return c.getIdCita() == idCitaABorrar;
+        }
+    );
+
+    if (it != citas.end()) {
+        citaEncontrada = true;
+        citas.erase(it, citas.end());
+    }
+
+    if (!citaEncontrada) {
+        std::cout << "No se encontró ninguna cita con ID " << idCitaABorrar << ".\n";
+    }
+    else {
+        guardarCitasCSV("Citas.csv");
+        std::cout << "Cita con ID " << idCitaABorrar << " eliminada exitosamente.\n";
+    }
 }
 
 //================= Menú Principal =================
